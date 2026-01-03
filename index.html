@@ -1,0 +1,58 @@
+<!-- O recurso de confirmação de exclusão foi adicionado. -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div id="app">
+        <header>
+            <h1>Lista de Compras</h1>
+            <div class="total-container">
+                <span>Valor Total:</span>
+                <span id="total-geral">R$ 0,00</span>
+            </div>
+            <div class="actions-container">
+                <button id="btn-export-pdf">Exportar PDF</button>
+                <button id="btn-export-json">Exportar JSON</button>
+                <button id="btn-import">Importar</button>
+                <input type="file" id="import-file" style="display: none;" accept=".json,.pdf">
+            </div>
+        </header>
+
+        <main>
+            <ul id="lista-itens">
+                <!-- Itens da lista serão inseridos aqui pelo JavaScript -->
+            </ul>
+        </main>
+
+        <footer>
+            <form id="form-item">
+                <input type="hidden" id="item-id">
+                <div class="input-group">
+                    <label for="nome-item">Nome</label>
+                    <input type="text" id="nome-item" placeholder="Nome do item" required>
+                </div>
+                <div class="input-group-row">
+                    <div class="input-group">
+                        <label for="qtde-item">Qtde</label>
+                        <input type="number" id="qtde-item" placeholder="1" value="1" min="1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="preco-item">Preço Unit.</label>
+                        <input type="text" id="preco-item" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" placeholder="R$ 0,00" required>
+                    </div>
+                </div>
+                <button type="submit" id="btn-submit">Adicionar Item</button>
+            </form>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
