@@ -221,7 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentIndex = items.findIndex(item => item.id === id);
         if (currentIndex === -1 || newPos === currentIndex + 1) return;
         const [item] = items.splice(currentIndex, 1);
-        items.splice(Math.min(newPos, items.length) - 1, 0, item);
+        // Na lista após a remoção, a posição desejada (1-based) vira índice (newPos - 1);
+        // o clamp garante que "ir para o fim" funcione mesmo com a lista encolhida
+        const insertIndex = Math.min(newPos - 1, items.length);
+        items.splice(insertIndex, 0, item);
         renderItems();
     };
 
@@ -398,8 +401,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (name && quantity > 0 && !isNaN(price) && price >= 0) {
             if (editingItemId) {
-                updateItem(editingItemId, name, quantity, price);
-                moveToPosition(editingItemId, posicaoItemInput.value);
+                // Captura o id antes: updateItem() zera editingItemId ao final
+                const idEmEdicao = editingItemId;
+                updateItem(idEmEdicao, name, quantity, price);
+                moveToPosition(idEmEdicao, posicaoItemInput.value);
             } else {
                 const novoItem = addItem(name, quantity, price);
                 moveToPosition(novoItem.id, posicaoItemInput.value);
