@@ -8,7 +8,7 @@ aplicativo no celular.
 ## Funcionalidades
 
 - **Adicionar/Editar items** — botão circular **"+"** no topo abre um modal único para as duas ações (com campo opcional de posição).
-- **Marcar como comprado** — toque no círculo ao lado do item (risca o nome e muda a cor).
+- **Marcar como comprado** — toque no círculo ao lado do item (risca o nome e muda a cor); o item marcado **vai para o fim da lista** automaticamente (e volta para o topo ao desmarcar), mantendo pendentes em cima e comprados embaixo.
 - **Reordenar** — nº da posição em cada item; setas ↑/↓ no item; campo "Posição" no modal; arrastar e soltar (segurar ~350ms no celular; arraste com o mouse no desktop).
 - **Total geral** — calculado sempre que a lista muda.
 - **Exportar/Importar** — PDF (visível/imprimível) e JSON (backup/restauração: só o `.json` é importável).

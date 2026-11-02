@@ -1,6 +1,6 @@
 // Service Worker do app "Lista de Compras"
-// Para publicar uma atualização, troque o número da versão do cache (ex.: v9)
-const CACHE_NAME = 'lista-compras-v8';
+// Para publicar uma atualização, troque o número da versão do cache (ex.: v10)
+const CACHE_NAME = 'lista-compras-v9';
 
 const ARQUIVOS_BASE = [
     './',

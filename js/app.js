@@ -197,7 +197,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleItemChecked = (id) => {
         const itemIndex = items.findIndex(item => item.id === id);
         if (itemIndex > -1) {
-            items[itemIndex].checked = !items[itemIndex].checked;
+            const item = items[itemIndex];
+            item.checked = !item.checked;
+            // "Comprar" envia o item para o fim da lista (comprados agrupados embaixo);
+            // desmarcar devolve para o topo, junto dos demais pendentes.
+            items.splice(itemIndex, 1);
+            if (item.checked) {
+                items.push(item);
+            } else {
+                items.unshift(item);
+            }
         }
         renderItems();
     };
