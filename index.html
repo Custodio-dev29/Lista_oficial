@@ -3,19 +3,476 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="description" content="Lista de compras offline com total calculado e exportação em PDF/JSON.">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lista">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png">
     <title>Lista de Compras</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    /* Impede que a rolagem do documento "tatue"/pule quando chega ao fim no mobile */
+    overscroll-behavior: none;
+}
+
+#app {
+    width: 100%;
+    max-width: 450px;
+    height: 100vh;   /* fallback para navegadores antigos */
+    height: 100dvh;  /* altura dinâmica: desconta a barra de endereço e o teclado no mobile */
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0; /* não encolhe quando o app diminui com o teclado aberto */
+}
+
+header h1 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.total-container {
+    font-size: 1.2em;
+    font-weight: 500;
+}
+
+main {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    /* Necessário para o overflow funcionar dentro de um layout flex */
+    min-height: 0;
+    /* Para a rolagem no próprio main quando a lista chega ao fim,
+       em vez de "vazar" para a página inteira (que era o que movia a tela) */
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+#lista-itens {
+    list-style: none;
+}
+
+.item-lista {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    transition: background-color 0.2s;
+    /* Evita seleção de texto/lupa do iOS durante o arraste */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.item-lista:hover {
+    background-color: #f1f1f1;
+}
+
+/* Número da posição ocupada pelo item */
+.item-lista .item-posicao {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: #e8e8e8;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: 700;
+    margin-right: 12px;
+}
+
+.item-lista.checked .item-posicao {
+    color: #aaa;
+}
+
+/* Estado visual durante o arrastar e soltar */
+.item-lista.arrastando {
+    opacity: 0.55;
+    border: 1px dashed #4CAF50;
+    background-color: #e8f5e9;
+}
+
+.item-info {
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.item-info h3 {
+    font-size: 1.1em;
+    font-weight: 500;
+    margin-bottom: 5px;
+    transition: color 0.2s, text-decoration 0.2s;
+}
+
+.item-info p {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.item-total {
+    font-weight: 700;
+    font-size: 1.1em;
+    margin-right: 15px;
+    color: #4CAF50;
+}
+
+.item-acoes button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.item-acoes {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 8px;
+}
+
+/* Botões de mover posição (subir/descer) */
+.move-btn {
+    padding: 4px !important;
+    line-height: 0;
+}
+
+.move-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: #999;
+    transition: fill 0.2s;
+}
+
+.move-btn:hover:not(:disabled) svg {
+    fill: #4CAF50;
+}
+
+.move-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.item-acoes .delete-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: #f44336;
+}
+
+/* Botão circular "+" para adicionar item (cabeçalho) */
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.header-title {
+    flex-grow: 1;
+}
+
+.fab {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fab svg {
+    width: 26px;
+    height: 26px;
+    fill: #4CAF50;
+}
+
+.fab:hover {
+    transform: scale(1.06);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.fab:active {
+    transform: scale(0.92);
+}
+
+.actions-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.actions-container button {
+    background-color: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.8em;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.actions-container button:hover {
+    background-color: rgba(255,255,255,0.3);
+}
+
+/* Modal de adicionar/editar item */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.modal-overlay.aberto {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    transform: translateY(15px);
+    transition: transform 0.2s ease;
+}
+
+.modal-overlay.aberto .modal {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.modal-header h2 {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: #4CAF50;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    border-radius: 50%;
+}
+
+.modal-close svg {
+    width: 24px;
+    height: 24px;
+    fill: #888;
+}
+
+.modal-close:hover svg {
+    fill: #555;
+}
+
+/* Com o teclado aberto no mobile, o modal vai para o topo para não ficar atrás dele */
+.modal-overlay.teclado {
+    align-items: flex-start;
+    padding-top: 12px;
+}
+
+#form-item {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.input-group input, #form-item button {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.input-group-row {
+    display: flex;
+    gap: 15px;
+}
+
+#form-item button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background-color 0.2s;
+}
+
+#form-item button:hover {
+    background-color: #45a049;
+}
+
+/* Estilos para o Checkbox e estado 'checked' */
+.item-lista-vazia {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+}
+
+.item-lista.checked .item-info h3 {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.item-lista .checkbox-container {
+    margin-right: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.item-lista .checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.item-lista.checked .checkbox {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.item-lista .checkbox svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+    transform: scale(0);
+    transition: transform 0.2s ease-in-out;
+}
+
+.item-lista.checked .checkbox svg {
+    transform: scale(1);
+}
+</style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
+        <script>
+        // No mobile, mantém a altura do app sincronizada com a área realmente visível
+        // (barra de endereço + teclado). Também ajusta o modal: com o teclado aberto
+        // ele alinha no topo para os campos continuarem visíveis.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aplica apenas em dispositivos de toque, para não interferir no desktop
+            if (!window.visualViewport || !window.matchMedia('(pointer: coarse)').matches) {
+                return;
+            }
+            const app = document.getElementById('app');
+            const modalOverlay = document.getElementById('modal-item');
+            const syncViewport = () => {
+                const alturaVisivel = window.visualViewport.height;
+                app.style.height = alturaVisivel + 'px';
+                if (modalOverlay) {
+                    // Teclado reduz a área visível para menos de 85% da tela
+                    modalOverlay.classList.toggle('teclado', alturaVisivel < window.innerHeight * 0.85);
+                }
+            };
+            window.visualViewport.addEventListener('resize', syncViewport);
+            syncViewport();
+        });
+        </script>
+
     <div id="app">
         <header>
-            <h1>Lista de Compras</h1>
-            <div class="total-container">
-                <span>Valor Total:</span>
-                <span id="total-geral">R$ 0,00</span>
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>Lista de Compras</h1>
+                    <div class="total-container">
+                        <span>Valor Total:</span>
+                        <span id="total-geral">R$ 0,00</span>
+                    </div>
+                </div>
+                <button id="btn-add-item" class="fab" aria-label="Adicionar item" title="Adicionar item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"></path></svg>
+                </button>
             </div>
             <div class="actions-container">
                 <button id="btn-export-pdf">Exportar PDF</button>
@@ -31,7 +488,17 @@
             </ul>
         </main>
 
-        <footer>
+    </div>
+
+    <!-- Modal para adicionar/editar item -->
+    <div id="modal-item" class="modal-overlay">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Adicionar Item</h2>
+                <button type="button" id="btn-close-modal" class="modal-close" aria-label="Fechar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+                </button>
+            </div>
             <form id="form-item">
                 <input type="hidden" id="item-id">
                 <div class="input-group">
@@ -45,14 +512,655 @@
                     </div>
                     <div class="input-group">
                         <label for="preco-item">Preço Unit.</label>
-                        <input type="text" id="preco-item" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" placeholder="R$ 0,00" required>
+                        <input type="text" id="preco-item" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" required>
                     </div>
+                </div>
+                <div class="input-group">
+                    <label for="posicao-item">Posição na lista</label>
+                    <input type="number" id="posicao-item" min="1" inputmode="numeric" placeholder="1">
                 </div>
                 <button type="submit" id="btn-submit">Adicionar Item</button>
             </form>
-        </footer>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Elementos do DOM
+    const form = document.getElementById('form-item');
+    const itemIdInput = document.getElementById('item-id');
+    const nomeItemInput = document.getElementById('nome-item');
+    const qtdeItemInput = document.getElementById('qtde-item');
+    const precoItemInput = document.getElementById('preco-item');
+    const listaItens = document.getElementById('lista-itens');
+    const totalGeralEl = document.getElementById('total-geral');
+    const btnSubmit = document.getElementById('btn-submit');
+
+    // Elementos do modal e do botão "+"
+    const btnAddItem = document.getElementById('btn-add-item');
+    const modalOverlay = document.getElementById('modal-item');
+    const modalTitulo = document.getElementById('modal-titulo');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const posicaoItemInput = document.getElementById('posicao-item');
+    const mainEl = document.querySelector('main');
+
+    // Permite digitar vírgula normalmente e formata apenas ao sair do campo
+    precoItemInput.addEventListener('input', (e) => {
+        // Permite apenas números, vírgula e ponto
+        let v = precoItemInput.value.replace(/[^0-9.,]/g, '');
+        // Troca ponto por vírgula se o usuário digitar ponto
+        v = v.replace(/\./g, ',');
+        // Só permite uma vírgula
+        const parts = v.split(',');
+        if (parts.length > 2) {
+            v = parts[0] + ',' + parts.slice(1).join('');
+        }
+        precoItemInput.value = v;
+    });
+    // Formata como moeda ao sair do campo
+    precoItemInput.addEventListener('blur', () => {
+        let valor = precoItemInput.value;
+        if (valor) {
+            valor = valor.replace(/\./g, '').replace(',', '.');
+            const num = parseFloat(valor);
+            if (!isNaN(num)) {
+                precoItemInput.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+    });
+
+    // Chave do LocalStorage
+    const STORAGE_KEY = 'shopping_list_items';
+
+    // Estado da aplicação
+    let items = [];
+    let editingItemId = null;
+
+    // --- Funções de Persistência (LocalStorage) ---
+
+    const saveItems = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    };
+
+    const loadItems = () => {
+        const storedItems = localStorage.getItem(STORAGE_KEY);
+        // Se houver itens, carrega. Senão, inicializa como array vazio.
+        items = storedItems ? JSON.parse(storedItems) : [];
+    };
+
+    // --- Funções Auxiliares ---
+
+    const formatCurrency = (value) => {
+        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    const parseCurrency = (value) => {
+        if (!value) return 0;
+        return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+    };
+
+    const formatInputAsCurrency = (input) => {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length === 0) {
+            input.value = '';
+            return;
+        }
+        if (value.length <= 2) {
+            value = value.padStart(3, '0');
+        }
+        let intValue = value.slice(0, -2);
+        let decimalValue = value.slice(-2);
+        if (intValue.length > 3) {
+            intValue = intValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+        input.value = `${intValue},${decimalValue}`;
+    };
+
+    // --- Funções Principais ---
+
+    const renderItems = () => {
+        listaItens.innerHTML = '';
+
+        if (items.length === 0) {
+            listaItens.innerHTML = '<li class="item-lista-vazia"><p>Nenhum item na lista.</p></li>';
+        } else {
+            items.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = `item-lista ${item.checked ? 'checked' : ''}`;
+                li.dataset.id = item.id;
+                li.setAttribute('draggable', 'true');
+                li.setAttribute('title', 'Arraste para mudar a posição');
+
+                const itemTotal = item.quantity * item.price;
+
+                const primeiroItem = index === 0;
+                const ultimoItem = index === items.length - 1;
+
+                li.innerHTML = `
+                    <span class="item-posicao">${index + 1}</span>
+                    <div class="checkbox-container">
+                        <div class="checkbox">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="item-info">
+                        <h3>${item.name}</h3>
+                        <p>${item.quantity} x ${formatCurrency(item.price)}</p>
+                    </div>
+                    <span class="item-total">${formatCurrency(itemTotal)}</span>
+                    <div class="item-acoes">
+                        <button type="button" class="move-btn subir-btn" aria-label="Mover para cima" ${primeiroItem ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6H6z"></path></svg>
+                        </button>
+                        <button type="button" class="move-btn descer-btn" aria-label="Mover para baixo" ${ultimoItem ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6H6z"></path></svg>
+                        </button>
+                        <button class="delete-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                        </button>
+                    </div>
+                `;
+                listaItens.appendChild(li);
+            });
+        }
+        
+        calculateGrandTotal();
+        addEventListenersToItems();
+        saveItems(); // Salva o estado atual no localStorage sempre que a UI é renderizada
+    };
+
+    const calculateGrandTotal = () => {
+        const total = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        totalGeralEl.textContent = formatCurrency(total);
+    };
+
+    const addItem = (name, quantity, price) => {
+        const newItem = {
+            id: Date.now(),
+            name,
+            quantity,
+            price,
+            checked: false
+        };
+        items.push(newItem);
+        renderItems();
+        return newItem;
+    };
+
+    const updateItem = (id, name, quantity, price) => {
+        const itemIndex = items.findIndex(item => item.id === id);
+        if (itemIndex > -1) {
+            const existingCheckedState = items[itemIndex].checked;
+            items[itemIndex] = { id, name, quantity, price, checked: existingCheckedState };
+        }
+        editingItemId = null;
+        btnSubmit.textContent = 'Adicionar Item';
+        renderItems();
+    };
+
+    const deleteItem = (id) => {
+        items = items.filter(item => item.id !== id);
+        renderItems();
+    };
+
+    const toggleItemChecked = (id) => {
+        const itemIndex = items.findIndex(item => item.id === id);
+        if (itemIndex > -1) {
+            items[itemIndex].checked = !items[itemIndex].checked;
+        }
+        renderItems();
+    };
+
+    // --- Controle de ordem/posição dos itens ---
+
+    // Move o item uma posição para cima (-1) ou para baixo (+1)
+    const moveItem = (id, direction) => {
+        const index = items.findIndex(item => item.id === id);
+        const target = index + direction;
+        if (index === -1 || target < 0 || target >= items.length) return;
+        [items[index], items[target]] = [items[target], items[index]];
+        renderItems();
+    };
+
+    // Move o item para a posição desejada (limitada ao tamanho da lista)
+    const moveToPosition = (id, desiredPosition) => {
+        let newPos = parseInt(desiredPosition);
+        if (isNaN(newPos)) return;
+        newPos = Math.min(Math.max(newPos, 1), items.length);
+        const currentIndex = items.findIndex(item => item.id === id);
+        if (currentIndex === -1 || newPos === currentIndex + 1) return;
+        const [item] = items.splice(currentIndex, 1);
+        items.splice(Math.min(newPos, items.length) - 1, 0, item);
+        renderItems();
+    };
+
+    // Aplica no estado a nova ordem definida pelo arrastar e soltar
+    const finalizeOrder = () => {
+        const orderedIds = Array.from(listaItens.querySelectorAll('.item-lista'))
+            .map(li => parseInt(li.dataset.id));
+        const reordered = orderedIds
+            .map(id => items.find(it => it.id === id))
+            .filter(Boolean);
+        if (reordered.length === items.length) {
+            items = reordered;
+        }
+        renderItems();
+    };
+    
+    const setupFormForEdit = (id) => {
+        const item = items.find(item => item.id === id);
+        if (item) {
+            editingItemId = id;
+            itemIdInput.value = item.id;
+            nomeItemInput.value = item.name;
+            qtdeItemInput.value = item.quantity;
+            precoItemInput.value = item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', '');
+            
+            btnSubmit.textContent = 'Atualizar Item';
+            openModal(true); // abre o modal preenchido para edição
+        }
+    };
+    
+    const resetForm = () => {
+        form.reset();
+        itemIdInput.value = '';
+        editingItemId = null;
+        qtdeItemInput.value = '1';
+        btnSubmit.textContent = 'Adicionar Item';
+    }
+
+    // --- Controle do Modal ---
+
+    const openModal = (editMode) => {
+        modalTitulo.textContent = editMode ? 'Editar Item' : 'Adicionar Item';
+        // Sugere como posição: a atual do item (edição) ou o final da lista (adição)
+        posicaoItemInput.value = editMode
+            ? (items.findIndex(item => item.id === editingItemId) + 1)
+            : (items.length + 1);
+        posicaoItemInput.max = items.length + (editMode ? 0 : 1);
+        modalOverlay.classList.add('aberto');
+        nomeItemInput.focus();
+    };
+
+    const closeModal = () => {
+        modalOverlay.classList.remove('aberto');
+        resetForm();
+    };
+
+    // --- Event Listeners ---
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const name = nomeItemInput.value.trim();
+        const quantity = parseInt(qtdeItemInput.value);
+        const price = parseCurrency(precoItemInput.value);
+
+        if (name && quantity > 0 && !isNaN(price) && price >= 0) {
+            if (editingItemId) {
+                updateItem(editingItemId, name, quantity, price);
+                moveToPosition(editingItemId, posicaoItemInput.value);
+            } else {
+                const novoItem = addItem(name, quantity, price);
+                moveToPosition(novoItem.id, posicaoItemInput.value);
+            }
+            closeModal(); // fecha o modal e reseta o formulário
+        } else {
+            alert('Por favor, preencha todos os campos corretamente.');
+        }
+    });
+
+    // --- Listeners do Modal e do botão "+" ---
+
+    btnAddItem.addEventListener('click', () => {
+        resetForm(); // garante estado limpo mesmo se uma edição anterior foi cancelada
+        openModal(false);
+    });
+
+    btnCloseModal.addEventListener('click', closeModal);
+
+    // Fecha ao clicar fora do modal
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            closeModal();
+        }
+    });
+
+    // Fecha com a tecla Esc
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalOverlay.classList.contains('aberto')) {
+            closeModal();
+        }
+    });
+
+    // --- Arrastar e soltar para mudar a posição (touch + mouse) ---
+
+    const LONG_PRESS_MS = 350; // tempo segurando para iniciar o arraste no touch
+    let dragState = null;      // { li, x, y, ativo, timer, isMouse }
+    let arrastandoTouch = false; // trava cliques de edição/marcar logo após o arraste
+
+    // Reposiciona o item arrastado conforme a posição do ponteiro
+    const reposicionarArraste = (li, x, y) => {
+        const alvoEl = document.elementFromPoint(x, y);
+        const liAlvo = alvoEl && alvoEl.closest('.item-lista');
+        if (liAlvo && liAlvo !== li) {
+            const rect = liAlvo.getBoundingClientRect();
+            const antes = y < rect.top + rect.height / 2;
+            listaItens.insertBefore(li, antes ? liAlvo : liAlvo.nextSibling);
+        }
+    };
+
+    const iniciarArrasteTouch = (li) => {
+        dragState.ativo = true;
+        arrastandoTouch = true;
+        li.classList.add('arrastando');
+        if (navigator.vibrate) navigator.vibrate(30); // feedback háptico
+    };
+
+    listaItens.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1 || arrastandoTouch) return;
+        const li = e.target.closest('.item-lista');
+        // Não inicia arraste pelos botões de ação nem pelo checkbox
+        if (!li || e.target.closest('.item-acoes, .checkbox-container')) return;
+        const touch = e.touches[0];
+        dragState = {
+            li,
+            x: touch.clientX,
+            y: touch.clientY,
+            ativo: false,
+            timer: setTimeout(() => iniciarArrasteTouch(li), LONG_PRESS_MS)
+        };
+    }, { passive: true });
+
+    listaItens.addEventListener('touchmove', (e) => {
+        if (!dragState) return;
+        const touch = e.touches[0];
+        const deslocamento = Math.hypot(touch.clientX - dragState.x, touch.clientY - dragState.y);
+
+        // Movimento antes do tempo limite cancela o arraste (rolagem normal da lista)
+        if (!dragState.ativo) {
+            if (deslocamento > 12) {
+                clearTimeout(dragState.timer);
+                dragState = null;
+            }
+            return;
+        }
+
+        e.preventDefault(); // trava a rolagem da página durante o arraste
+        reposicionarArraste(dragState.li, touch.clientX, touch.clientY);
+
+        // Rolagem automática ao aproximar os cantos da área da lista
+        const mainRect = mainEl.getBoundingClientRect();
+        if (touch.clientY < mainRect.top + 48) mainEl.scrollTop -= 12;
+        else if (touch.clientY > mainRect.bottom - 48) mainEl.scrollTop += 12;
+    }, { passive: false });
+
+    const encerrarArrasteTouch = (e) => {
+        if (!dragState) return;
+        clearTimeout(dragState.timer);
+        const estavaArrastando = dragState.ativo;
+        if (estavaArrastando) {
+            if (e.cancelable) e.preventDefault(); // evita disparar clique no item
+            dragState.li.classList.remove('arrastando');
+            finalizeOrder();
+            setTimeout(() => { arrastandoTouch = false; }, 100);
+        }
+        dragState = null;
+    };
+
+    listaItens.addEventListener('touchend', encerrarArrasteTouch);
+    listaItens.addEventListener('touchcancel', encerrarArrasteTouch);
+
+    // Arrastar e soltar com o mouse (desktop)
+    listaItens.addEventListener('dragstart', (e) => {
+        const li = e.target.closest('.item-lista');
+        if (!li) return;
+        dragState = { li, ativo: true, isMouse: true };
+        li.classList.add('arrastando');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', li.dataset.id);
+    });
+
+    listaItens.addEventListener('dragover', (e) => {
+        if (!dragState || !dragState.isMouse) return;
+        e.preventDefault();
+        reposicionarArraste(dragState.li, e.clientX, e.clientY);
+    });
+
+    const encerrarArrasteMouse = () => {
+        if (!dragState || !dragState.isMouse) return;
+        dragState.li.classList.remove('arrastando');
+        dragState = null;
+        finalizeOrder();
+    };
+
+    listaItens.addEventListener('drop', (e) => {
+        if (dragState && dragState.isMouse) e.preventDefault();
+        encerrarArrasteMouse();
+    });
+    listaItens.addEventListener('dragend', encerrarArrasteMouse);
+    
+    const addEventListenersToItems = () => {
+        document.querySelectorAll('.item-lista').forEach(itemElement => {
+            const itemId = parseInt(itemElement.dataset.id);
+
+            itemElement.querySelector('.delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const item = items.find(i => i.id === itemId);
+                if (item && confirm(`Tem certeza que deseja excluir "${item.name}"?`)) {
+                    deleteItem(itemId);
+                }
+            });
+
+            itemElement.querySelector('.subir-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                moveItem(itemId, -1);
+            });
+
+            itemElement.querySelector('.descer-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                moveItem(itemId, +1);
+            });
+
+            itemElement.querySelector('.item-info').addEventListener('click', () => {
+                if (arrastandoTouch) return; // ignora clique logo após um arraste
+                setupFormForEdit(itemId);
+            });
+
+            itemElement.querySelector('.checkbox-container').addEventListener('click', () => {
+                if (arrastandoTouch) return; // ignora clique logo após um arraste
+                toggleItemChecked(itemId);
+            });
+        });
+    }
+
+    // --- Funções de Import/Export ---
+    const btnExportPDF = document.getElementById('btn-export-pdf');
+    const btnExportJSON = document.getElementById('btn-export-json');
+    const btnImport = document.getElementById('btn-import');
+    const importFileInput = document.getElementById('import-file');
+
+    // Exporta lista em PDF
+    const exportDataPDF = () => {
+        if (items.length === 0) {
+            alert('A lista está vazia. Não há nada para exportar.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let y = 20;
+
+        // Título
+        doc.setFontSize(22);
+        doc.setTextColor(40, 40, 120);
+        doc.text('Lista de Compras', pageWidth / 2, y, { align: 'center' });
+        y += 12;
+
+        // Linha decorativa
+        doc.setDrawColor(40, 40, 120);
+        doc.setLineWidth(1.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 8;
+
+        // Cabeçalho da tabela
+        doc.setFontSize(13);
+        doc.setFont(undefined, 'bold');
+        doc.setFillColor(220, 230, 250);
+        doc.rect(margin, y - 7, pageWidth - 2 * margin, 10, 'F');
+        doc.setTextColor(40, 40, 120);
+        // Novos espaçamentos de coluna
+        const colItem = margin + 2;
+        const colQtde = margin + 80;
+        const colPreco = margin + 110;
+        const colTotal = margin + 150;
+        doc.text('Item', colItem, y);
+        doc.text('Qtde', colQtde, y);
+        doc.text('Preço Unit.', colPreco, y);
+        doc.text('Total', colTotal, y, {align: 'right'});
+        doc.setDrawColor(180, 180, 180);
+        doc.setLineWidth(0.5);
+        doc.line(margin, y + 2, pageWidth - margin, y + 2);
+        y += 10;
+
+        // Itens da lista
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(12);
+        doc.setTextColor(50, 50, 50);
+        items.forEach((item, idx) => {
+            const itemTotal = item.quantity * item.price;
+            // Alterna cor de fundo das linhas
+            if (idx % 2 === 0) {
+                doc.setFillColor(245, 245, 255);
+                doc.rect(margin, y - 6, pageWidth - 2 * margin, 8, 'F');
+            }
+            doc.text(item.name, colItem, y);
+            doc.text(String(item.quantity), colQtde, y);
+            doc.text(formatCurrency(item.price), colPreco, y);
+            doc.text(formatCurrency(itemTotal), colTotal, y, {align: 'right'});
+            y += 8;
+        });
+
+        // Linha do total
+        doc.setDrawColor(40, 40, 120);
+        doc.setLineWidth(0.8);
+        doc.line(margin, y + 2, pageWidth - margin, y + 2);
+        y += 12;
+
+        // Valor Total
+        const grandTotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(0, 100, 0);
+        // Valor Total alinhado à coluna Total
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(0, 100, 0);
+        doc.text('Valor Total:', colTotal - 40, y, {align: 'right'});
+        doc.text(formatCurrency(grandTotal), colTotal, y, {align: 'right'});
+        y += 15;
+
+        // Rodapé com data
+        doc.setFontSize(10);
+        doc.setTextColor(120, 120, 120);
+        const data = new Date();
+        const dataStr = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR');
+        doc.text('Exportado em: ' + dataStr, margin, doc.internal.pageSize.getHeight() - 10);
+
+        doc.save('lista-de-compras.pdf');
+    };
+
+    const importData = (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        // Verifica a extensão do arquivo
+        if (file.type === 'application/pdf') {
+            alert('A importação de arquivos PDF não é suportada.\n\nPara importar uma lista, por favor, utilize um arquivo .json que tenha sido exportado anteriormente desta aplicação. A exportação em PDF serve apenas para visualização e impressão.');
+            importFileInput.value = ''; // Limpa o seletor de arquivo
+            return;
+        }
+
+        if (file.type === 'application/json') {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedItems = JSON.parse(e.target.result);
+                    if (Array.isArray(importedItems)) {
+                        if (confirm('Isso substituirá sua lista de compras atual. Deseja continuar?')) {
+                            items = importedItems;
+                            renderItems();
+                            alert('Lista de compras importada com sucesso!');
+                        }
+                    } else {
+                        alert('O arquivo de importação é inválido. O conteúdo deve ser uma lista de itens.');
+                    }
+                } catch (error) {
+                    console.error('Erro ao analisar o arquivo JSON:', error);
+                    alert('Ocorreu um erro ao importar o arquivo. Verifique se o arquivo é um JSON válido.');
+                } finally {
+                    importFileInput.value = '';
+                }
+            };
+            reader.onerror = () => {
+                alert('Não foi possível ler o arquivo.');
+                importFileInput.value = '';
+            };
+            reader.readAsText(file);
+        } else {
+            alert('Formato de arquivo não suportado. Por favor, selecione um arquivo .json ou .pdf.');
+            importFileInput.value = '';
+        }
+    };
+
+    // Exporta lista em JSON
+    const exportDataJSON = () => {
+        if (items.length === 0) {
+            alert('A lista está vazia. Não há nada para exportar.');
+            return;
+        }
+        const dataStr = JSON.stringify(items, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'lista-de-compras.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    btnExportPDF.addEventListener('click', exportDataPDF);
+    btnExportJSON.addEventListener('click', exportDataJSON);
+    btnImport.addEventListener('click', () => importFileInput.click());
+    importFileInput.addEventListener('change', importData);
+
+
+    // --- Inicialização da Aplicação ---
+    const init = () => {
+        loadItems();
+        renderItems();
+    };
+
+    init(); // Inicia a aplicação
+});
+</script>
+
+    <script>
+    // Registra o Service Worker: permite instalar como app e usar offline
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch((err) => {
+                console.warn('Falha ao registrar o Service Worker:', err);
+            });
+        });
+    }
+    </script>
 </body>
 </html>
