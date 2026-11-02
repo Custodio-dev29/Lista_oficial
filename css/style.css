@@ -146,6 +146,16 @@ header h1 {
     background-color: rgba(255,255,255,0.3);
 }
 
+/* Botão de deletar a lista inteira (ação destrutiva: destaque avermelhado) */
+#btn-deletar-lista {
+    background-color: rgba(183, 28, 28, 0.35);
+    border-color: rgba(255, 140, 140, 0.6);
+}
+
+#btn-deletar-lista:hover {
+    background-color: rgba(220, 68, 68, 0.5);
+}
+
 /* ===== 4. Lista de itens ===== */
 
 #lista-itens {

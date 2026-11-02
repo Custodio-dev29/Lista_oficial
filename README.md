@@ -12,6 +12,7 @@ aplicativo no celular.
 - **Reordenar** — nº da posição em cada item; setas ↑/↓ no item; campo "Posição" no modal; arrastar e soltar (segurar ~350ms no celular; arraste com o mouse no desktop).
 - **Total geral** — calculado sempre que a lista muda.
 - **Exportar/Importar** — PDF (visível/imprimível) e JSON (backup/restauração: só o `.json` é importável).
+- **Deletar a lista** — botão no cabeçalho remove todos os itens de uma vez, com confirmação e sugestão de backup.
 - **Instalável e offline** — PWA com service worker; funciona sem internet após a primeira visita.
 
 ## Estrutura de arquivos

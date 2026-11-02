@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseModal = document.getElementById('btn-close-modal');
     const btnSubmit = document.getElementById('btn-submit');
     const btnExcluirModal = document.getElementById('btn-excluir-modal');
+    const btnDeletarLista = document.getElementById('btn-deletar-lista');
 
     // Botões de exportar/importar
     const btnExportPDF = document.getElementById('btn-export-pdf');
@@ -629,6 +630,21 @@ document.addEventListener('DOMContentLoaded', () => {
     btnExportJSON.addEventListener('click', exportDataJSON);
     btnImport.addEventListener('click', () => importFileInput.click());
     importFileInput.addEventListener('change', importData);
+
+    // Deleta todos os itens da lista (com confirmação e sugestão de backup)
+    const deletarLista = () => {
+        if (items.length === 0) {
+            alert('A lista já está vazia.');
+            return;
+        }
+        const aviso = `Deletar TODOS os ${items.length} itens da lista?\n\nEsta ação não pode ser desfeita. Se quiser guardar um backup antes, use "Exportar JSON".`;
+        if (confirm(aviso)) {
+            items = [];
+            renderItems(); // limpa a lista, recalcula o total e salva o estado vazio
+        }
+    };
+
+    btnDeletarLista.addEventListener('click', deletarLista);
 
     /* ===== 10. Inicialização ===== */
 
