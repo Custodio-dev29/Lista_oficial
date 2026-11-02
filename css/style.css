@@ -444,7 +444,7 @@ header h1 {
     background-color: #45a049;
 }
 
-/* Botão de excluir dentro do modal (edição no mobile) */
+/* Botão de excluir dentro do modal (edição) */
 #form-item .btn-excluir-modal {
     background-color: transparent;
     color: #f44336;
@@ -460,9 +460,19 @@ header h1 {
     border-color: #f44336;
 }
 
-/* No mobile (telas pequenas/touch), o botão de excluir aparece dentro do modal */
-@media (max-width: 600px), (pointer: coarse) {
-    #form-item .btn-excluir-modal.visivel {
-        display: block;
-    }
+/* Aparece sempre que o modal está em modo de edição (adicionar/editar) */
+#form-item .btn-excluir-modal.visivel {
+    display: block;
+}
+
+/* Linha com os botões do formulário lado a lado (economiza altura no mobile) */
+#form-item .form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+#form-item .form-actions button {
+    width: auto;
+    flex: 1 1 0;
+    padding: 12px 6px;
 }
