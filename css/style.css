@@ -443,3 +443,26 @@ header h1 {
 #form-item button:hover {
     background-color: #45a049;
 }
+
+/* Botão de excluir dentro do modal (edição no mobile) */
+#form-item .btn-excluir-modal {
+    background-color: transparent;
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.45);
+    font-weight: 700;
+    cursor: pointer;
+    display: none; /* oculto por padrão; aparece via classe .visivel no modo edição */
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+#form-item .btn-excluir-modal:hover {
+    background-color: rgba(244, 67, 54, 0.08);
+    border-color: #f44336;
+}
+
+/* No mobile (telas pequenas/touch), o botão de excluir aparece dentro do modal */
+@media (max-width: 600px), (pointer: coarse) {
+    #form-item .btn-excluir-modal.visivel {
+        display: block;
+    }
+}

@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitulo = document.getElementById('modal-titulo');
     const btnCloseModal = document.getElementById('btn-close-modal');
     const btnSubmit = document.getElementById('btn-submit');
+    const btnExcluirModal = document.getElementById('btn-excluir-modal');
 
     // Botões de exportar/importar
     const btnExportPDF = document.getElementById('btn-export-pdf');
@@ -345,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ? (items.findIndex(item => item.id === editingItemId) + 1)
             : (items.length + 1);
         posicaoItemInput.max = items.length + (editMode ? 0 : 1);
+        // No mobile, o botão de excluir só aparece em modo de edição
+        btnExcluirModal.classList.toggle('visivel', !!editMode);
         modalOverlay.classList.add('aberto');
         nomeItemInput.focus();
     };
@@ -406,6 +409,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnCloseModal.addEventListener('click', closeModal);
+
+    // Excluir item direto do modal (botão visível no mobile em modo edição)
+    btnExcluirModal.addEventListener('click', () => {
+        if (!editingItemId) return;
+        const item = items.find(i => i.id === editingItemId);
+        if (item && confirm(`Tem certeza que deseja excluir "${item.name}"?`)) {
+            deleteItem(editingItemId);
+            closeModal();
+        }
+    });
 
     // Fecha ao clicar fora do modal
     modalOverlay.addEventListener('click', (e) => {
