@@ -33,9 +33,13 @@
     <!-- Container único do app -->
     <div id="app">
 
-        <!-- Cabeçalho: título, total, botão "+" e ações de exportar/importar -->
+        <!-- Cabeçalho: menu sanduíche, título/total e botão "+" -->
         <header>
             <div class="header-top">
+                <button id="btn-menu" class="hamburger" aria-label="Abrir menu" title="Menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>
+                </button>
+
                 <div class="header-title">
                     <h1>Lista de Compras</h1>
                     <div class="total-container">
@@ -48,14 +52,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"></path></svg>
                 </button>
             </div>
-
-            <div class="actions-container">
-                <button id="btn-export-pdf">Exportar PDF</button>
-                <button id="btn-export-json">Exportar JSON</button>
-                <button id="btn-import">Importar</button>
-                <button id="btn-deletar-lista">Deletar Lista</button>
-                <input type="file" id="import-file" style="display: none;" accept=".json,.pdf">
-            </div>
         </header>
 
         <!-- Lista de itens (preenchida pelo js/app.js) -->
@@ -65,6 +61,41 @@
             </ul>
         </main>
 
+    </div>
+
+    <!-- Menu sanduíche com as ações do app (sem o botão de incluir item) -->
+    <div id="menu-overlay" class="menu-overlay">
+        <nav class="menu-panel" role="menu" aria-label="Opções do app">
+            <div class="menu-header">
+                <span>Opções</span>
+                <button type="button" id="btn-fechar-menu" class="modal-close" aria-label="Fechar menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+                </button>
+            </div>
+
+            <button type="button" class="menu-item" id="btn-export-pdf">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
+                <span>Exportar PDF</span>
+            </button>
+
+            <button type="button" class="menu-item" id="btn-export-json">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"></path></svg>
+                <span>Exportar JSON</span>
+            </button>
+
+            <button type="button" class="menu-item" id="btn-import">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+                <span>Importar</span>
+            </button>
+
+            <button type="button" class="menu-item menu-item-danger" id="btn-deletar-lista">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                <span>Deletar Lista</span>
+            </button>
+
+            <p class="menu-dica">Os itens ficam salvos no próprio aparelho. Use "Exportar JSON" para backup.</p>
+        </nav>
+        <input type="file" id="import-file" style="display: none;" accept=".json,.pdf">
     </div>
 
     <!-- Modal para adicionar/editar item -->

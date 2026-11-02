@@ -37,6 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnExcluirModal = document.getElementById('btn-excluir-modal');
     const btnDeletarLista = document.getElementById('btn-deletar-lista');
 
+    // Menu sanduíche (painel lateral)
+    const btnMenu = document.getElementById('btn-menu');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const btnFecharMenu = document.getElementById('btn-fechar-menu');
+
     // Botões de exportar/importar
     const btnExportPDF = document.getElementById('btn-export-pdf');
     const btnExportJSON = document.getElementById('btn-export-json');
@@ -430,8 +435,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fecha com a tecla Esc
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('aberto')) {
+        if (e.key !== 'Escape') return;
+        if (modalOverlay.classList.contains('aberto')) {
             closeModal();
+        }
+        if (menuOverlay.classList.contains('aberto')) {
+            closeMenu();
+        }
+    });
+
+    // --- Menu sanduíche (abre/fecha e fecha ao escolher uma ação) ---
+
+    const openMenu = () => {
+        menuOverlay.classList.add('aberto');
+    };
+
+    const closeMenu = () => {
+        menuOverlay.classList.remove('aberto');
+    };
+
+    btnMenu.addEventListener('click', openMenu);
+
+    btnFecharMenu.addEventListener('click', closeMenu);
+
+    // Clique no fundo escuro ou em qualquer opção fecha o menu
+    menuOverlay.addEventListener('click', (e) => {
+        if (e.target === menuOverlay || e.target.closest('.menu-item')) {
+            closeMenu();
         }
     });
 

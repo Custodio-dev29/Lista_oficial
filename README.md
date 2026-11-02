@@ -12,7 +12,9 @@ aplicativo no celular.
 - **Reordenar** — nº da posição em cada item; setas ↑/↓ no item; campo "Posição" no modal; arrastar e soltar (segurar ~350ms no celular; arraste com o mouse no desktop).
 - **Total geral** — calculado sempre que a lista muda.
 - **Exportar/Importar** — PDF (visível/imprimível) e JSON (backup/restauração: só o `.json` é importável).
-- **Deletar a lista** — botão no cabeçalho remove todos os itens de uma vez, com confirmação e sugestão de backup.
+- **Exportar/Importar** — PDF (visível/imprimível) e JSON (backup/restauração: só o `.json` é importável).
+- **Menu sanduíche (☰)** — opções do app em painel lateral: Exportar PDF, Exportar JSON, Importar e Deletar Lista (fecha ao escolher; o "+" continua direto no cabeçalho).
+- **Deletar a lista** — opção no menu, com confirmação e sugestão de backup.
 - **Instalável e offline** — PWA com service worker; funciona sem internet após a primeira visita.
 
 ## Estrutura de arquivos
