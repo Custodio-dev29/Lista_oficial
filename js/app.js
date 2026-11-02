@@ -125,11 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.innerHTML = `
                     <div class="marcador">
                         <span class="item-posicao">${index + 1}</span>
-                        <div class="checkbox-container">
-                            <div class="checkbox">
+                        <button type="button" class="checkbox-container"
+                            aria-label="${item.checked ? 'Marcar como pendente' : 'Marcar como comprado'}"
+                            aria-pressed="${item.checked}">
+                            <span class="checkbox" aria-hidden="true">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
-                            </div>
-                        </div>
+                            </span>
+                        </button>
                     </div>
                     <div class="item-info">
                         <h3>${item.name}</h3>
@@ -512,8 +514,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 setupFormForEdit(itemId);
             });
 
-            itemElement.querySelector('.checkbox-container').addEventListener('click', () => {
-                if (arrastandoTouch) return; // ignora clique logo após um arraste
+            itemElement.querySelector('.checkbox-container').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 toggleItemChecked(itemId);
             });
         });
