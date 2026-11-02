@@ -123,10 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ultimoItem = index === items.length - 1;
 
                 li.innerHTML = `
-                    <span class="item-posicao">${index + 1}</span>
-                    <div class="checkbox-container">
-                        <div class="checkbox">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                    <div class="marcador">
+                        <span class="item-posicao">${index + 1}</span>
+                        <div class="checkbox-container">
+                            <div class="checkbox">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                            </div>
                         </div>
                     </div>
                     <div class="item-info">

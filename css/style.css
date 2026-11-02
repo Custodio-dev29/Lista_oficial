@@ -283,20 +283,33 @@ header h1 {
     background-color: #e8f5e9;
 }
 
-/* Número da posição ocupada pelo item */
-.item-lista .item-posicao {
-    width: 26px;
-    height: 26px;
+/* Índice (posição) sobreposto ao checkbox, para economizar espaço horizontal */
+.marcador {
+    position: relative;
+    width: 24px;
     flex-shrink: 0;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.item-lista .item-posicao {
+    position: absolute;
+    top: -7px;
+    left: -7px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background-color: #e8e8e8;
     color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8em;
+    font-size: 0.65em;
     font-weight: 700;
-    margin-right: 12px;
+    border: 1px solid #fff;
+    z-index: 1;
 }
 
 .item-lista.checked .item-posicao {
@@ -373,7 +386,6 @@ header h1 {
 
 /* Checkbox circular (marcar item como comprado) */
 .item-lista .checkbox-container {
-    margin-right: 15px;
     cursor: pointer;
     display: flex;
     align-items: center;
