@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalOverlay = document.getElementById('modal-item');
     const modalTitulo = document.getElementById('modal-titulo');
     const btnCloseModal = document.getElementById('btn-close-modal');
+    const btnSubmit = document.getElementById('btn-submit');
 
     // Botões de exportar/importar
     const btnExportPDF = document.getElementById('btn-export-pdf');
